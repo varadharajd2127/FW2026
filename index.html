@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farewell 2026 - Official Payment Portal</title>
+    <style>
+        :root {
+            --primary: #1b5e20;
+            --bg: #f8fafb;
+            --white: #ffffff;
+            --shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container { max-width: 1100px; margin: auto; }
+        h1 { text-align: center; color: var(--primary); font-size: 24px; margin-bottom: 25px; }
+
+        /* Dashboard Summary */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--white);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-box h3 { margin: 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-box .val { font-size: 24px; font-weight: bold; color: var(--primary); margin: 5px 0; }
+        .stat-box .sub { font-size: 11px; color: #999; }
+
+        /* Toolbar Controls */
+        .toolbar {
+            background: var(--white);
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+        }
+
+        input, select, button { padding: 9px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+
+        /* Table */
+        .card-table { background: var(--white); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f1f3f5; padding: 14px; text-align: left; color: #555; cursor: pointer; user-select: none; }
+        td { padding: 12px 14px; border-bottom: 1px solid #f1f1f1; }
+
+        /* Modal */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 300px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* Defaulter List Reminder */
+        .msg-section { margin-top: 30px; background: white; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
+        textarea { width: 100%; height: 100px; margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+
+        /* --- PRINT INVOICE STYLE --- */
+        #printable-invoice { display: none; }
+
+        @media print {
+            body * { display: none !important; }
+            #printable-invoice, #printable-invoice * { display: block !important; visibility: visible !important; }
+            #printable-invoice { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; }
+            
+            .premium-receipt { 
+                border: 2px solid #000; padding: 40px; margin: 30px auto; width: 450px; 
+                background-color: #fff; text-align: left; position: relative;
+            }
+            .r-header { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .r-header h2 { font-size: 26px; color: #1b5e20; margin: 0; letter-spacing: 1px; }
+            
+            .r-body { font-size: 15px; }
+            .r-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+            
+            .r-total {
+                margin-top: 20px; padding: 15px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; 
+                display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;
+            }
+
+            /* SEAL STYLING (CENTERED) */
+            .seal-container {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 20px 0; /* Creates space above and below the seal */
+            }
+
+            .r-seal-box {
+                width: 120px;
+                height: 120px;
+                border: 2px solid #2e7d32; /* Inner line */
+                outline: 4px solid #2e7d32; /* Outer thick line */
+                outline-offset: 1px; /* Space between the two lines */
+                border-radius: 50%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #2e7d32;
+                background: #fff;
+                text-align: center;
+            }
+
+            .p-txt { 
+                font-size: 28px; 
+                font-weight: 900; 
+                margin: 0; 
+                line-height: 4;
+                letter-spacing: 1px;
+            }
+
+            .r-footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; font-style: italic; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Farewell 2026 Payment Dashboard</h1>
+
+    <div class="summary-grid" id="summaryBox"></div>
+
+    <div class="toolbar">
+        <input type="text" id="search" placeholder="Search by name or dept..." onkeyup="renderTable()" style="flex: 1; min-width: 150px;">
+        
+        <select id="classFilter" onchange="renderTable()">
+            <option value="">All Batches</option>
+            <option value="1st">1st UG</option>
+            <option value="2nd">2nd UG</option>
+        </select>
+
+        <select id="statusFilter" onchange="renderTable()">
+            <option value="">All Status</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+        </select>
+    </div>
+
+    <div class="card-table">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortData('dept')">Dept No <span id="sort-dept">↕</span></th>
+                    <th onclick="sortData('name')">Student Name <span id="sort-name">↕</span></th>
+                    <th onclick="sortData('status')">Status <span id="sort-status">↕</span></th>
+                    <th>Action</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody id="studentTable"></tbody>
+        </table>
+    </div>
+
+    <div class="msg-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin:0">List Generator</h4>
+            <select id="messageClass" onchange="generateMessage()">
+                <option value="">Select Class</option>
+                <option value="1st">1st UG</option>
+                <option value="2nd">2nd UG</option>
+            </select>
+        </div>
+        <textarea id="messageBox"></textarea>
+        <button onclick="copyMessage()" style="width: 100%; background: #555; margin-top: 5px;">Copy List to Clipboard</button>
+    </div>
+</div>
+
+<div class="modal" id="paymentPopup">
+    <div class="modal-content">
+        <h3 style="margin:0">Record Payment</h3>
+        <input type="text" id="contact" placeholder="Contact Number">
+        <input type="date" id="payDate">
+        <select id="payType">
+            <option value="Cash">Cash</option>
+            <option value="Online">Online</option>
+        </select>
+        <button onclick="savePayment()">Verify & Save</button>
+        <button onclick="closePopup()" style="background:#888">Cancel</button>
+    </div>
+</div>
+
+<div id="printable-invoice"></div>
+
+<script>
+let currentStudent = null;
+let currentSort = { key: 'dept', direction: 'asc' };
+
+const students = [
+    {dept:"25-UAZ-001",name:"ANISH P",class:"1st"}, {dept:"25-UAZ-002",name:"KAMALESH K",class:"1st"}, {dept:"25-UAZ-003",name:"MOHAMMED MUZAKKIR HUSSAIN H",class:"1st"}, {dept:"25-UAZ-004",name:"FELIX CALVIN A",class:"1st"}, {dept:"25-UAZ-005",name:"MARIYA VAISHNIKA A",class:"1st"}, {dept:"25-UAZ-006",name:"JOHN VALERIUS F",class:"1st"}, {dept:"25-UAZ-007",name:"THOTA SRIKANTH",class:"1st"}, {dept:"25-UAZ-008",name:"SANDRIA ANJALI WENISCH S",class:"1st"}, {dept:"25-UAZ-009",name:"GRACE EVANJALINE Y",class:"1st"}, {dept:"25-UAZ-012",name:"SOORYA B",class:"1st"}, {dept:"25-UAZ-013",name:"LOKESH KUMAR P",class:"1st"}, {dept:"25-UAZ-014",name:"JACKWIN S",class:"1st"}, {dept:"25-UAZ-015",name:"JENITHA SOWBARNICA E",class:"1st"}, {dept:"25-UAZ-016",name:"MOUNISH D",class:"1st"}, {dept:"25-UAZ-017",name:"THIMANDA P",class:"1st"}, {dept:"25-UAZ-018",name:"MARIA PRISHA A",class:"1st"}, {dept:"25-UAZ-019",name:"MOHAN BABU P",class:"1st"}, {dept:"25-UAZ-020",name:"ORIGANTIE ILEANA",class:"1st"}, {dept:"25-UAZ-022",name:"JOEL KAMEI",class:"1st"}, {dept:"25-UAZ-023",name:"HAYDEN V",class:"1st"}, {dept:"25-UAZ-024",name:"CATHERINE ROSE VAZ P",class:"1st"}, {dept:"25-UAZ-025",name:"LASHIYA HEPZIBHA M",class:"1st"}, {dept:"25-UAZ-026",name:"ALFRED MELVYN A",class:"1st"}, {dept:"25-UAZ-027",name:"BHAWANTHI SHRINITHI R",class:"1st"}, {dept:"25-UAZ-028",name:"ALFIN GEOFFERY S",class:"1st"}, {dept:"25-UAZ-029",name:"NUPUR BISWAS",class:"1st"}, {dept:"25-UAZ-031",name:"FELSIYA J",class:"1st"}, {dept:"25-UAZ-032",name:"KIWI SAM BENSON J",class:"1st"}, {dept:"25-UAZ-033",name:"RAMISA FATHIMA M",class:"1st"}, {dept:"25-UAZ-034",name:"VALAN ARASU",class:"1st"}, {dept:"25-UAZ-035",name:"JONNAH BLESSIE J",class:"1st"}, {dept:"25-UAZ-036",name:"LATHIKA K",class:"1st"}, {dept:"25-UAZ-038",name:"SHYAM KUMAR D",class:"1st"}, {dept:"25-UAZ-039",name:"MANU AADHIRAN M S",class:"1st"}, {dept:"25-UAZ-040",name:"STEFFI ANDREA D",class:"1st"}, {dept:"25-UAZ-041",name:"DENCILIN BRIJI C S",class:"1st"}, {dept:"25-UAZ-042",name:"SWETHA K P",class:"1st"}, {dept:"25-UAZ-043",name:"CHRISTY FLORENCE B",class:"1st"}, {dept:"25-UAZ-044",name:"RAJKUMARI DIVYA",class:"1st"}, {dept:"25-UAZ-046",name:"ROSHINI V",class:"1st"}, {dept:"25-UAZ-047",name:"NISHANTH JOSEPH J",class:"1st"}, {dept:"25-UAZ-048",name:"ADHVAY GOWTHAMAN",class:"1st"}, {dept:"25-UAZ-049",name:"SHINY MIRACLE L",class:"1st"}, {dept:"25-UAZ-050",name:"AVLIN KUJUR",class:"1st"}, {dept:"25-UAZ-051",name:"THARIKA M",class:"1st"}, {dept:"25-UAZ-052",name:"DHANYA A",class:"1st"}, {dept:"25-UAZ-053",name:"SHALINI A",class:"1st"}, {dept:"25-UAZ-054",name:"LINET SOWMIYA A K",class:"1st"}, {dept:"25-UAZ-056",name:"CHELSY TIRKEY",class:"1st"}, {dept:"25-UAZ-057",name:"ANSH S NANAVATI",class:"1st"},
+    {dept:"24-UAZ-001",name:"DEVADHARSHINI S",class:"2nd"}, {dept:"24-UAZ-002",name:"DOROTHY FRANCIS",class:"2nd"}, {dept:"24-UAZ-003",name:"SACHIDHANANTHA JAYA SWARUPAN S",class:"2nd"}, {dept:"24-UAZ-005",name:"JACK ALLAN S",class:"2nd"}, {dept:"24-UAZ-006",name:"LEENA MARY J S",class:"2nd"}, {dept:"24-UAZ-007",name:"SAM TAMILVENTHAN K",class:"2nd"}, {dept:"24-UAZ-008",name:"BLESSIE A",class:"2nd"}, {dept:"24-UAZ-010",name:"FRANCIS JONAL P",class:"2nd"}, {dept:"24-UAZ-011",name:"SAHAYA ADLIN QUEEN S",class:"2nd"}, {dept:"24-UAZ-012",name:"AUSTRA JINI",class:"2nd"}, {dept:"24-UAZ-013",name:"LINGESHWAR K G",class:"2nd"}, {dept:"24-UAZ-014",name:"SAMUVEL P M",class:"2nd"}, {dept:"24-UAZ-019",name:"SUTHI SUREKHA S",class:"2nd"}, {dept:"24-UAZ-020",name:"ANJALI SINGH",class:"2nd"}, {dept:"24-UAZ-023",name:"SHARON ROY",class:"2nd"}, {dept:"24-UAZ-024",name:"ANBARASU A",class:"2nd"}, {dept:"24-UAZ-027",name:"DAKSHINESH V",class:"2nd"}, {dept:"24-UAZ-028",name:"HRISHI S NATHAN",class:"2nd"}, {dept:"24-UAZ-029",name:"MECHEL CHRISHTOBER",class:"2nd"}, {dept:"24-UAZ-030",name:"SAMUVEL Y",class:"2nd"}, {dept:"24-UAZ-031",name:"KARTHIKEYAN C T",class:"2nd"}, {dept:"24-UAZ-032",name:"RABIN",class:"2nd"}, {dept:"24-UAZ-033",name:"PRASANTH S",class:"2nd"}, {dept:"24-UAZ-034",name:"ANISH PRIYAN S",class:"2nd"}, {dept:"24-UAZ-035",name:"SAMANTHA M",class:"2nd"}, {dept:"24-UAZ-036",name:"VIBASHA R G",class:"2nd"}, {dept:"24-UAZ-037",name:"SACHIN A M",class:"2nd"}, {dept:"24-UAZ-038",name:"SUPRITHA S",class:"2nd"}, {dept:"24-UAZ-039",name:"AADHITHYAN ANBUKUMARAN",class:"2nd"}, {dept:"24-UAZ-040",name:"SNEGAN J",class:"2nd"}, {dept:"24-UAZ-041",name:"VASANTH K",class:"2nd"}, {dept:"24-UAZ-042",name:"SALVINA EMILY G",class:"2nd"}, {dept:"24-UAZ-043",name:"SHISHA LAEL B C",class:"2nd"}, {dept:"24-UAZ-044",name:"NIRVAN G",class:"2nd"}, {dept:"24-UAZ-045",name:"VASUNDHRADEVI P S",class:"2nd"}, {dept:"24-UAZ-046",name:"THARUN RAJ S",class:"2nd"}, {dept:"24-UAZ-047",name:"BARATH C",class:"2nd"}, {dept:"24-UAZ-050",name:"AVEENA C",class:"2nd"}, {dept:"24-UAZ-051",name:"DHARSHINI SELVARAJ",class:"2nd"}, {dept:"24-UAZ-052",name:"MATHI AZHAGAN M",class:"2nd"}, {dept:"24-UAZ-053",name:"GANISHGA K",class:"2nd"}, {dept:"24-UAZ-054",name:"RISWIN JOE A",class:"2nd"}, {dept:"24-UAZ-056",name:"NITHISH K",class:"2nd"}, {dept:"24-UAZ-057",name:"MAHALAKSHMI R",class:"2nd"}, {dept:"24-UAZ-058",name:"SANJAY A",class:"2nd"}, {dept:"24-UAZ-059",name:"TANNISTHA R",class:"2nd"}, {dept:"24-UAZ-060",name:"HORCHUIPEM P",class:"2nd"}, {dept:"24-UAZ-061",name:"TAMILARASAN V",class:"2nd"}, {dept:"24-UAZ-062",name:"ABISHEK D",class:"2nd"}, {dept:"24-UAZ-063",name:"KISHORE G K",class:"2nd"}
+];
+
+function sortData(key) {
+    if (currentSort.key === key) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    else { currentSort.key = key; currentSort.direction = 'asc'; }
+    renderTable();
+}
+
+function renderTable(){
+    const data = JSON.parse(localStorage.getItem("payments")) || {};
+    const search = document.getElementById("search").value.toLowerCase(), filter = document.getElementById("classFilter").value, statusF = document.getElementById("statusFilter").value, tbody = document.getElementById("studentTable");
+    ['dept', 'name', 'status'].forEach(k => { const span = document.getElementById(`sort-${k}`); if (currentSort.key === k) span.innerHTML = currentSort.direction === 'asc' ? '↑' : '↓'; else span.innerHTML = '↕'; });
+    let list = students.map(s => { const paid = data[s.dept]; return { ...s, paid: !!paid, status: paid ? "Paid" : "Pending" }; }).filter(s => { return (!filter || s.class === filter) && (!statusF || s.status === statusF) && (s.name.toLowerCase().includes(search) || s.dept.includes(search)); });
+    if (currentSort.key) list.sort((a, b) => { let valA = a[currentSort.key], valB = b[currentSort.key]; if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1; if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1; return 0; });
+    tbody.innerHTML = "";
+    list.forEach(s => { tbody.innerHTML += `<tr><td><b>${s.dept}</b></td><td>${s.name}</td><td style="color:${s.paid?'green':'#bbb'}"><b>${s.status}</b></td><td>${s.paid ? `<button style="background:#d32f2f; font-size:11px;" onclick="deletePayment('${s.dept}')">Undo</button>` : `<button onclick="openPopup('${s.dept}')">Collect</button>`}</td><td>${s.paid ? `<button onclick="printReceipt('${s.dept}')" style="background:#2e7d32; font-size:11px;">Print PDF</button>` : '-'}</td></tr>`; });
+    updateSummary();
+}
+
+function updateSummary(){
+    const data = JSON.parse(localStorage.getItem("payments")) || {};
+    const paidT = Object.keys(data).length;
+    const p1 = students.filter(s => s.class === "1st" && data[s.dept]).length, p2 = students.filter(s => s.class === "2nd" && data[s.dept]).length;
+    const up1 = students.filter(s => s.class === "1st" && !data[s.dept]).length, up2 = students.filter(s => s.class === "2nd" && !data[s.dept]).length;
+    document.getElementById("summaryBox").innerHTML = `<div class="stat-box"><h3>Amount Collected</h3><div class="val">₹${paidT * 50}</div></div><div class="stat-box"><h3>Paid Students</h3><div class="val">${paidT}</div><div class="sub">1st: ${p1} | 2nd: ${p2}</div></div><div class="stat-box"><h3>Unpaid Count</h3><div class="val">${students.length - paidT}</div><div class="sub">1st: ${up1} | 2nd: ${up2}</div></div>`;
+}
+
+function openPopup(dept){ currentStudent = dept; document.getElementById("paymentPopup").style.display = "flex"; }
+function closePopup(){ document.getElementById("paymentPopup").style.display = "none"; }
+function savePayment(){
+    const data = JSON.parse(localStorage.getItem("payments")) || {};
+    data[currentStudent] = { type: document.getElementById("payType").value, contact: document.getElementById("contact").value, date: document.getElementById("payDate").value || new Date().toLocaleDateString() };
+    localStorage.setItem("payments", JSON.stringify(data));
+    closePopup(); renderTable();
+}
+function deletePayment(dept){ if(confirm("Clear record?")) { const data = JSON.parse(localStorage.getItem("payments")) || {}; delete data[dept]; localStorage.setItem("payments", JSON.stringify(data)); renderTable(); } }
+
+function printReceipt(deptNo){
+    const student = students.find(s => s.dept === deptNo);
+    const payment = (JSON.parse(localStorage.getItem("payments")) || {})[deptNo];
+    
+    document.getElementById("printable-invoice").innerHTML = `
+        <div class="premium-receipt">
+            <div class="r-header"><h2>FAREWELL 2026</h2><p>Official Payment Receipt</p></div>
+            <div class="r-body">
+                <div class="r-row"><span>Student Name</span> <b>${student.name}</b></div>
+                <div class="r-row"><span>Dept Number</span> <b>${student.dept}</b></div>
+                <div class="r-row"><span>Year</span> <b>${student.class} Year UG</b></div>
+                <div class="r-row"><span>Contact</span> <b>${payment.contact || 'N/A'}</b></div>
+                <div class="r-row"><span>Payment Mode</span> <b>${payment.type}</b></div>
+                <div class="r-row"><span>Date Received</span> <b>${payment.date}</b></div>
+                <div class="r-total"><span>TOTAL PAID</span> <span>₹50.00</span></div>
+            </div>
+            
+            <div class="seal-container">
+                <div class="r-seal-box">
+                    <p class="p-txt">PAID</p>
+                </div>
+            </div>
+
+            <div class="r-footer"><p>System generated receipt hence, No physical signature required.</p></div>
+        </div>`;
+    window.print();
+}
+
+function generateMessage(){
+    const cls = document.getElementById("messageClass").value; if(!cls) return;
+    const data = JSON.parse(localStorage.getItem("payments")) || {};
+    const unpaid = students.filter(s => s.class === cls && !data[s.dept]);
+    let msg = `*FAREWELL 2026 - PENDING LIST (${cls} UG)*\n\nThe following students have not yet paid (₹50):\n\n`;
+    unpaid.forEach((s, i) => msg += `${i+1}. ${s.dept} - ${s.name}\n`);
+    document.getElementById("messageBox").value = msg;
+}
+function copyMessage(){ document.getElementById("messageBox").select(); document.execCommand("copy"); alert("Copied!"); }
+
+renderTable();
+</script>
+</body>
+</html>
